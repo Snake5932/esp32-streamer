@@ -45,3 +45,7 @@ app.*.map.json
 
 # esp32
 esp32_client/module_info.h
+
+# test_camera_client
+
+/test_camera_client/build/
