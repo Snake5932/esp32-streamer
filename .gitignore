@@ -42,3 +42,6 @@ app.*.map.json
 /client/android/app/debug/
 /client/android/app/profile/
 /client/android/app/release/
+
+# esp32
+esp32_client/module_info.h

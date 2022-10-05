@@ -1,0 +1,4 @@
+const char *ssid = "wifi network name";
+const char *pass = "wifi network pass";
+
+const char *camera_name = "cam name";
