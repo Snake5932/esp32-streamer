@@ -1,4 +1,12 @@
 const char *ssid = "wifi network name";
 const char *pass = "wifi network pass";
 
+const char *server_ip = "185.188.183.121";
+const int server_port = 8080;
+
+const char *username = "user";
+const char *password = "user";
+
+const unsigned long dump_one_frame_msec = 100; //100ms for one frame
+
 const char *camera_name = "cam name";
