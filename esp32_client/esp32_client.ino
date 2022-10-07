@@ -71,7 +71,7 @@ void print_bytes(unsigned char *buf, int len) {
 
 bool is_cmd(char *topic, byte *payload, unsigned int len, char *cmd) {
 	return strcmp(topic, camera_cmd_topic.c_str()) == 0 &&
-		len == strlen(cmd) && strncmp(payload, cmd, len);
+		len == strlen(cmd) && strncmp((const char*)payload, cmd, len);
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
