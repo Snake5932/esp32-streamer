@@ -38,7 +38,8 @@ void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
       buf_len = 64000;
 
     res = client.write(data+offset, buf_len);
-
+    Serial.printf("written %d\n", res);
+    
     offset += buf_len;
     to_write -= buf_len;
   } while (res == buf_len && to_write > 0);
@@ -71,7 +72,7 @@ void print_bytes(unsigned char *buf, int len) {
 
 bool is_cmd(char *topic, byte *payload, unsigned int len, char *cmd) {
 	return strcmp(topic, camera_cmd_topic.c_str()) == 0 &&
-		len == strlen(cmd) && strncmp((const char*)payload, cmd, len);
+		len == strlen(cmd) && strncmp((const char*)payload, cmd, len) == 0;
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -81,8 +82,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 	print_bytes(payload, length);
 	Serial.println();
 
-  	if (is_cmd(topic, payload, length, "req")) {
-    	dump_camera_subscribers++;
+  if (is_cmd(topic, payload, length, "req")) {
+    dump_camera_subscribers++;
 	} else if (is_cmd(topic, payload, length, "stop")) {
 		dump_camera_subscribers--;
 		if (dump_camera_subscribers < 0) {
