@@ -6,7 +6,7 @@
   #define XCLK_GPIO_NUM    21
   #define SIOD_GPIO_NUM    26
   #define SIOC_GPIO_NUM    27
-  
+
   #define Y9_GPIO_NUM      35
   #define Y8_GPIO_NUM      34
   #define Y7_GPIO_NUM      39
@@ -18,14 +18,14 @@
   #define VSYNC_GPIO_NUM   25
   #define HREF_GPIO_NUM    23
   #define PCLK_GPIO_NUM    22
- 
+
 #elif defined(CAMERA_MODEL_M5STACK_PSRAM)
   #define PWDN_GPIO_NUM     -1
   #define RESET_GPIO_NUM    15
   #define XCLK_GPIO_NUM     27
   #define SIOD_GPIO_NUM     25
   #define SIOC_GPIO_NUM     23
-  
+
   #define Y9_GPIO_NUM       19
   #define Y8_GPIO_NUM       36
   #define Y7_GPIO_NUM       18
@@ -37,14 +37,14 @@
   #define VSYNC_GPIO_NUM    22
   #define HREF_GPIO_NUM     26
   #define PCLK_GPIO_NUM     21
- 
+
 #elif defined(CAMERA_MODEL_M5STACK_WITHOUT_PSRAM)
   #define PWDN_GPIO_NUM     -1
   #define RESET_GPIO_NUM    15
   #define XCLK_GPIO_NUM     27
   #define SIOD_GPIO_NUM     25
   #define SIOC_GPIO_NUM     23
-  
+
   #define Y9_GPIO_NUM       19
   #define Y8_GPIO_NUM       36
   #define Y7_GPIO_NUM       18
@@ -56,14 +56,14 @@
   #define VSYNC_GPIO_NUM    22
   #define HREF_GPIO_NUM     26
   #define PCLK_GPIO_NUM     21
- 
+
 #elif defined(CAMERA_MODEL_AI_THINKER)
   #define PWDN_GPIO_NUM     32
   #define RESET_GPIO_NUM    -1
   #define XCLK_GPIO_NUM      0
   #define SIOD_GPIO_NUM     26
   #define SIOC_GPIO_NUM     27
-  
+
   #define Y9_GPIO_NUM       35
   #define Y8_GPIO_NUM       34
   #define Y7_GPIO_NUM       39
@@ -112,18 +112,18 @@ int setup_esp32() {
 
   Serial.println("init step 2: setting camera params");
   if(psramFound()){
-    config.frame_size = FRAMESIZE_UXGA;
+    config.frame_size = FRAMESIZE_HD;
     config.jpeg_quality = 6;//10
     config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_SVGA;
+    config.frame_size = FRAMESIZE_HD;
     config.jpeg_quality = 6;//12
     config.fb_count = 1;
   }
 
   Serial.println("init step 3: try to init camera ...");
   // Camera init
-  
+
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.printf("Camera init failed with error 0x%x\n", err);

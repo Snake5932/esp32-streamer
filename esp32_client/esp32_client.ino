@@ -1,16 +1,28 @@
 #include "esp_camera.h"
 #include "esp_timer.h"
-#include "WiFi.h"
 #include "Arduino.h"
+#include "WiFi.h"
 #include "PubSubClient.h"
 #include "soc/soc.h"           //disable brownout problems
 #include "soc/rtc_cntl_reg.h"  //disable brownout problems
+
+// #if WITH_TLS == 1
+// #include "WiFiClientSecure.h"
+// #endif
+
+#include "WiFiClientSecure.h"
 
 #include "module_info.h"
 #include "esp32_setup.h"
 #include "wifi_setup.h"
 
+#if WITH_TLS == 1
+WiFiClientSecure wifi_client;
+// wifi_client.setCACert(tls_cert);
+#else
 WiFiClient wifi_client;
+#endif
+
 PubSubClient client(server_ip, server_port, wifi_client);
 
 String camera_topic = String("cameras/") + String(camera_name);
@@ -19,6 +31,7 @@ String camera_data_topic = camera_topic + String("/data");
 String camera_cmd_topic = camera_topic + String("/cmd");
 
 unsigned long last_dump_msec = 0;
+unsigned long last_reconnect_try_msec = 0;
 //use qos2 to send exactly 1 stream request to camera
 int dump_camera_subscribers = 0;
 
@@ -39,7 +52,7 @@ void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
 
     res = client.write(data+offset, buf_len);
     Serial.printf("written %d\n", res);
-    
+
     offset += buf_len;
     to_write -= buf_len;
   } while (res == buf_len && to_write > 0);
@@ -57,7 +70,10 @@ int dump_camera() {
 	}
 	Serial.println(fb->format);
 	Serial.printf("%dx%d len: %d\n", fb->width, fb->height, fb->len);
-	publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf, fb->len);
+  int part = fb->len/3;
+	publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf, part);
+  publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + part, part);
+  publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + 2*part, part);
 	esp_camera_fb_return(fb);
 
 	return 0;
@@ -102,7 +118,7 @@ bool connect_to_server() {
     	Serial.println("connected to server");
     	const char *ptr = camera_state_topic.c_str();
     	Serial.printf("ptr %p\n", ptr);
-		client.subscribe(camera_cmd_topic.c_str());
+		  client.subscribe(camera_cmd_topic.c_str());
     	client.publish(camera_state_topic.c_str(), "online", true);
 	} else {
 		Serial.printf("cannot connect to server\n");
@@ -118,7 +134,9 @@ void setup() {
 	setup_esp32();
 	//ssid and pass in module_info.ino
 	setup_wifi(ssid, pass);
-
+  #if WITH_TLS == 1
+  wifi_client.setCACert(tls_cert);
+  #endif
 	client.setBufferSize(65535);
 	client.setCallback(callback);
 
@@ -128,15 +146,25 @@ void setup() {
 void loop() {
 	int r;
 
-	if (!client.connected()) {
+  unsigned long curr_msec = millis();
+
+	if (!client.connected() && curr_msec - last_reconnect_try_msec > reconnect_timeout_msec) {
+    last_reconnect_try_msec = curr_msec;
+
 		r = client.state();
 		Serial.printf("mqtt client state: %d\n", r);;
-		connect_to_server();
+
+    connect_to_server();
+
+    #if WITH_TLS == 1
+    char buf[256];
+    wifi_client.lastError(buf, 256);
+    Serial.printf("tls err: %s\n", buf);
+    #endif
 	}
 
 	client.loop();
 
-	unsigned long curr_msec = millis();
 	if (dump_camera_subscribers && curr_msec - last_dump_msec > dump_one_frame_msec) {
 		last_dump_msec = curr_msec;
 		dump_camera();
