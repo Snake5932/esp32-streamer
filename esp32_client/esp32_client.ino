@@ -49,7 +49,7 @@ void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
     buf_len = to_write;
     if (buf_len > 64000)
       buf_len = 64000;
-
+    Serial.printf("heap size left: %d, wifi_client: %d\n", ESP.getFreeHeap(), wifi_client.availableForWrite());
     res = client.write(data+offset, buf_len);
     Serial.printf("written %d\n", res);
 
@@ -70,10 +70,11 @@ int dump_camera() {
 	}
 	Serial.println(fb->format);
 	Serial.printf("%dx%d len: %d\n", fb->width, fb->height, fb->len);
-  int part = fb->len/3;
-	publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf, part);
-  publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + part, part);
-  publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + 2*part, part);
+	int part = fb->len/3;
+  Serial.printf("heap size left: %d\n", ESP.getFreeHeap());
+	publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf, fb->len);
+  // publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + part, part);
+  // publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + 2*part, part);
 	esp_camera_fb_return(fb);
 
 	return 0;
@@ -134,9 +135,9 @@ void setup() {
 	setup_esp32();
 	//ssid and pass in module_info.ino
 	setup_wifi(ssid, pass);
-  #if WITH_TLS == 1
-  wifi_client.setCACert(tls_cert);
-  #endif
+#if WITH_TLS == 1
+	wifi_client.setCACert(tls_cert);
+#endif
 	client.setBufferSize(65535);
 	client.setCallback(callback);
 
@@ -146,21 +147,21 @@ void setup() {
 void loop() {
 	int r;
 
-  unsigned long curr_msec = millis();
+	unsigned long curr_msec = millis();
 
 	if (!client.connected() && curr_msec - last_reconnect_try_msec > reconnect_timeout_msec) {
-    last_reconnect_try_msec = curr_msec;
+    	last_reconnect_try_msec = curr_msec;
 
 		r = client.state();
 		Serial.printf("mqtt client state: %d\n", r);;
 
-    connect_to_server();
+		connect_to_server();
 
-    #if WITH_TLS == 1
-    char buf[256];
-    wifi_client.lastError(buf, 256);
-    Serial.printf("tls err: %s\n", buf);
-    #endif
+#if WITH_TLS == 1
+		char buf[256];
+		wifi_client.lastError(buf, 256);
+		Serial.printf("tls err: %s\n", buf);
+#endif
 	}
 
 	client.loop();
