@@ -6,6 +6,9 @@
 #include "soc/soc.h"           //disable brownout problems
 #include "soc/rtc_cntl_reg.h"  //disable brownout problems
 
+#include "sys/poll.h"
+#include "sys/socket.h"
+
 // #if WITH_TLS == 1
 // #include "WiFiClientSecure.h"
 // #endif
@@ -36,26 +39,43 @@ unsigned long last_reconnect_try_msec = 0;
 int dump_camera_subscribers = 0;
 
 //https://github.com/knolleary/pubsubclient/issues/791#issuecomment-800096719
+//change buildheader method argument to uint32_t and corresponding local variable
 void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
   unsigned long start_ts = millis();
 
   client.beginPublish(channel, len, false);
 
-  size_t res;
+  int res;
   uint32_t offset = 0;
   uint32_t to_write = len;
-  uint32_t buf_len;
-  do {
-    buf_len = to_write;
-    if (buf_len > 64000)
-      buf_len = 64000;
-    Serial.printf("heap size left: %d, wifi_client: %d\n", ESP.getFreeHeap(), wifi_client.availableForWrite());
-    res = client.write(data+offset, buf_len);
-    Serial.printf("written %d\n", res);
+  
+  int socket = wifi_client.fd();
+  struct pollfd pfds;
+  pfds.fd = socket;
+  pfds.events = POLLOUT;
 
-    offset += buf_len;
-    to_write -= buf_len;
-  } while (res == buf_len && to_write > 0);
+  do {
+    Serial.printf("heap size left: %d, wifi_client: %d\n", ESP.getFreeHeap(), wifi_client.availableForWrite());
+    res = poll(&pfds, 1, -1);
+    Serial.printf("poll ret: %d %d %d %d\n", res, pfds.revents, errno, res < 0);
+    if (res < 0) {
+      Serial.printf("poll err %d\n", errno);
+      break;
+    }
+    if ((pfds.revents & POLLERR) || (pfds.revents & POLLHUP) ||
+        (pfds.revents & POLLNVAL)) {
+      break;
+    }
+    res = send(socket, data+offset, to_write, 0);
+    // res = client.write(data+offset, to_write);
+    Serial.printf("written %d %d\n", res, errno);
+    if (res < 0) {
+      break;
+    }
+
+    offset += res;
+    to_write -= res;
+  } while (to_write > 0);
 
   client.endPublish();
 
