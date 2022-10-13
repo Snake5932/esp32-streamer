@@ -7,10 +7,12 @@ class CustomFormField extends StatelessWidget {
     required this.hintText,
     this.inputFormatters,
     this.validator,
+    this.onSubmit
   }) : super(key: key);
   final String hintText;
   final List<TextInputFormatter>? inputFormatters;
   final String? Function(String?)? validator;
+  final void Function(String?)? onSubmit;
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -19,6 +21,7 @@ class CustomFormField extends StatelessWidget {
         inputFormatters: inputFormatters,
         validator: validator,
         decoration: InputDecoration(hintText: hintText),
+        onSaved: onSubmit,
       ),
     );
   }

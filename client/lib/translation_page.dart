@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/home_page.dart';
+
+import 'home_page.dart';
+import 'mosquitto_manager.dart';
 // import 'package:untitled/main_page.dart';
 
 class TranslationPage extends StatefulWidget {
-  const TranslationPage({Key? key}) : super(key: key);
+  final MQTTClientManager? manager;
+  const TranslationPage({super.key, required this.manager});
 
   @override
   State<TranslationPage> createState() {
@@ -13,14 +16,14 @@ class TranslationPage extends StatefulWidget {
 
 class _TranslationPageState extends State<TranslationPage> {
 
-  Material getToBackButton() {
+  Material getToBackButton(MQTTClientManager? manager) {
     return Material(
       color: Colors.transparent,
       child: MaterialButton(
           onPressed: () {
             Navigator.pushReplacement(context,
                 MaterialPageRoute(builder:
-                    (context) => const MyHomePage())
+                    (context) => MyHomePage(manager: manager))
             );
           },
         child: Image.asset('assets/images/green_arrow.png'),
@@ -66,7 +69,7 @@ class _TranslationPageState extends State<TranslationPage> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: getToBackButton(),
+      floatingActionButton: getToBackButton(widget.manager),
     );
   }
 

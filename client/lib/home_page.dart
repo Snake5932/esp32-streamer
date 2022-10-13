@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/translation_page.dart';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:untitled/mosquitto_manager.dart';
 
+import 'camera.dart';
+import 'config.dart';
 import 'login_page.dart';
+import 'translation_page.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final MQTTClientManager? manager;
+
+  const MyHomePage({super.key, required this.manager});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -12,11 +18,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
 
-  void navigateToTranslation() {
-    Navigator.pushReplacement(context,
-        MaterialPageRoute(builder:
-            (context) => const TranslationPage())
-    );
+  List<Camera> cameras = [];
+
+
+  @override
+  void initState() {
+    super.initState();
+    // showCameras = false;
+    // cameras = [];
   }
 
   TextButton getButtonExit() {
@@ -44,7 +53,28 @@ class _MyHomePageState extends State<MyHomePage> {
       style: TextButton.styleFrom(
         foregroundColor: Colors.green,
       ),
-      onPressed: () {},
+      onPressed: () {
+        widget.manager?.subscribe(Config.topics['ALL_CAMERAS']!);
+        Stream<List<MqttReceivedMessage<MqttMessage>>>? messages = widget.manager?.getMessagesStream();
+        messages?.listen((event) {
+          final MqttPublishMessage recMess =
+          event[0].payload as MqttPublishMessage;
+          final String message =
+          MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+          print('MQTTClient[topic] = ${event[0].topic}');
+          print('MQTTClient[message] = $message');
+          final topic = event[0].topic.split('/');
+          final cameraName = topic[1];
+          final cameraType = message;
+          final idx = widget.manager?.cameras.indexWhere((element) => element.name == cameraName);
+          if (idx == -1) {
+            widget.manager?.cameras.add(Camera(cameraName, t: cameraType));
+          } else {
+            widget.manager?.cameras.elementAt(idx ?? -1).type = message;
+          }
+          setState(() { });
+        });
+      },
       child: const Text(
           'Список камер',
           style: TextStyle(
@@ -54,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  TextButton getButtonCameraName(String name) {
+  TextButton getButtonCameraName(String name, MQTTClientManager? manager) {
     return TextButton(
       style: TextButton.styleFrom(
         foregroundColor: Colors.green,
@@ -62,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder:
-                (context) => const TranslationPage())
+                (context) => TranslationPage(manager: manager))
         );
       },
       child: Text(
@@ -74,8 +104,38 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  List<Widget> getAllCameras() {
+    List<Widget> camerasWidgets = [];
+    for (var element in cameras) {
+      if (element.type == 'online') {
+        camerasWidgets.add(
+            Row(
+              children: [
+                SizedBox(
+                  width: 50.0,
+                  height: 50.0,
+                  child: Image.asset(
+                      'assets/images/webcam.png',
+                      width: 50.0,
+                      height: 50.0,
+                      fit: BoxFit.fill
+                  ),
+                ),
+                Align(
+                    alignment: Alignment.center,
+                    child: getButtonCameraName(element.name, widget.manager)
+                )
+              ],
+            )
+        );
+      }
+    }
+    return camerasWidgets;
+  }
+
   @override
   Widget build(BuildContext context) {
+    cameras = widget.manager?.cameras ?? [];
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -93,54 +153,8 @@ class _MyHomePageState extends State<MyHomePage> {
           Center(
             child: getButtonListCameras()
           ),
-          Row(
-            children: [
-              SizedBox(
-                width: 50.0,
-                height: 50.0,
-                child: Image.asset(
-                    'assets/images/webcam.png',
-                    width: 50.0,
-                    height: 50.0,
-                    fit: BoxFit.fill
-                ),
-              ),
-              Align(
-                  alignment: Alignment.center,
-                  child: getButtonCameraName('Some name')
-              )
-            ],
-          ),
-          Row(
-            children: [
-              SizedBox(
-                width: 50.0,
-                height: 50.0,
-                child: Image.asset(
-                    'assets/images/webcam.png',
-                    width: 50.0,
-                    height: 50.0,
-                    fit: BoxFit.fill
-                ),
-              ),
-              getButtonCameraName('Some name')
-            ],
-          ),
-          Row(
-            children: [
-              SizedBox(
-                width: 50.0,
-                height: 50.0,
-                child: Image.asset(
-                    'assets/images/webcam.png',
-                    width: 50.0,
-                    height: 50.0,
-                    fit: BoxFit.fill
-                ),
-              ),
-              getButtonCameraName('Some name')
-            ],
-          )
+          // if (showCameras)
+            ...getAllCameras(),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
