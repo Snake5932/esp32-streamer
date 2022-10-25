@@ -112,12 +112,12 @@ int setup_esp32() {
 
   Serial.println("init step 2: setting camera params");
   if(psramFound()){
-    config.frame_size = FRAMESIZE_HD;
-    config.jpeg_quality = 6;//10
+    config.frame_size = FRAMESIZE_VGA;
+    config.jpeg_quality = 40;//10
     config.fb_count = 2;
   } else {
-    config.frame_size = FRAMESIZE_HD;
-    config.jpeg_quality = 6;//12
+    config.frame_size = FRAMESIZE_VGA;
+    config.jpeg_quality = 40;//12
     config.fb_count = 1;
   }
 
@@ -129,6 +129,9 @@ int setup_esp32() {
     Serial.printf("Camera init failed with error 0x%x\n", err);
     return -1;
   }
+
+  sensor_t * s = esp_camera_sensor_get();
+  s->set_special_effect(s, 2);
 
   return 0;
 }
