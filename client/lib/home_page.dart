@@ -28,12 +28,19 @@ class _MyHomePageState extends State<MyHomePage> {
     // cameras = [];
   }
 
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
   TextButton getButtonExit() {
     return TextButton(
       style: TextButton.styleFrom(
         foregroundColor: Colors.red,
       ),
       onPressed: () {
+        widget.manager?.client.disconnect();
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder:
                 (context) => const LoginPage())
@@ -59,20 +66,31 @@ class _MyHomePageState extends State<MyHomePage> {
         messages?.listen((event) {
           final MqttPublishMessage recMess =
           event[0].payload as MqttPublishMessage;
-          final String message =
-          MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-          print('MQTTClient[topic] = ${event[0].topic}');
-          print('MQTTClient[message] = $message');
+          // print('MQTTClient[topic] = ${event[0].topic}');
+          // print('MQTTClient[message] = $message');
           final topic = event[0].topic.split('/');
-          final cameraName = topic[1];
-          final cameraType = message;
-          final idx = widget.manager?.cameras.indexWhere((element) => element.name == cameraName);
-          if (idx == -1) {
-            widget.manager?.cameras.add(Camera(cameraName, t: cameraType));
-          } else {
-            widget.manager?.cameras.elementAt(idx ?? -1).type = message;
+          if (topic.length == 3) {
+            if (topic[2] == 'state') {
+              final String message =
+              MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+              print('MQTTClient[topic] = ${event[0].topic}');
+              print('MQTTClient[message] = $message');
+              final cameraName = topic[1];
+              final cameraType = message;
+              final idx = widget.manager?.cameras.indexWhere((element) =>
+              element.name == cameraName);
+              if (idx == -1) {
+                widget.manager?.cameras.add(Camera(cameraName, t: cameraType));
+              } else {
+                widget.manager?.cameras
+                    .elementAt(idx ?? -1)
+                    .type = message;
+              }
+              // if (mounted) {
+                setState(() {});
+              // }
+            }
           }
-          setState(() { });
         });
       },
       child: const Text(
@@ -92,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         Navigator.pushReplacement(context,
             MaterialPageRoute(builder:
-                (context) => TranslationPage(manager: manager))
+                (context) => TranslationPage(manager: manager, cameraName: name))
         );
       },
       child: Text(
@@ -130,7 +148,21 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       }
     }
-    return camerasWidgets;
+    //Добавить сообщение о том, что нет доступных камер
+    if (camerasWidgets.isEmpty) {
+      return const [
+        SizedBox(height: 10),
+        Text(
+          'Нет доступных камер',
+          style: TextStyle(
+              fontSize: 20,
+              color: Colors.green
+          ),
+        )
+      ];
+    } else {
+      return camerasWidgets;
+    }
   }
 
   @override

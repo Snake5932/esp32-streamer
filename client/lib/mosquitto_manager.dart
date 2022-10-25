@@ -1,8 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:developer' as dev_log;
 
+import 'package:flutter/services.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:path/path.dart' as path;
+import 'package:convert/convert.dart';
 
 import 'camera.dart';
 import 'config.dart';
@@ -42,11 +47,19 @@ class MQTTClientManager {
     client.pongCallback = pong;
 
     // client.setProtocolV311();
-    // client.secure = true;
-    // ByteData data = await rootBundle.load(Config.pathToCert);
-    // SecurityContext context = SecurityContext();
-    // context.setTrustedCertificatesBytes(data.buffer.asUint8List());
-    // client.onBadCertificate = (Object a) => true;
+    client.secure = true;
+    ByteData data = await rootBundle.load(Config.pathToCrt);
+    SecurityContext context = SecurityContext.defaultContext;
+    context.setTrustedCertificatesBytes(data.buffer.asUint8List());
+    // final data = base64Decode(Config.crtStr);
+    // client.securityContext.setTrustedCertificatesBytes(data);
+    // dev_log.log('Bytes crt = $data');
+    // exit(-1);
+    // final data = Uint8List.fromList(Config.crtStr.codeUnits);
+    // print('Cert = ${data}');
+
+    client.onBadCertificate = (Object a) => true;
+    client.securityContext = context;
     final connMessage = MqttConnectMessage()
         .withClientIdentifier(Config.client_id)
         .startClean() // Non persistent session for testing
@@ -96,7 +109,7 @@ class MQTTClientManager {
     print('MQTTClient::Ping response received');
   }
 
-  void publishMessage(String topic, String message) {
+  void publishMessage(String topic, String message, {MqttQos qos=MqttQos.exactlyOnce}) {
     final builder = MqttClientPayloadBuilder();
     builder.addString(message);
     client.publishMessage(topic, MqttQos.exactlyOnce, builder.payload!);
