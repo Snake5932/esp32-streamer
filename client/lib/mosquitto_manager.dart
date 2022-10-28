@@ -22,7 +22,9 @@ class MQTTClientManager {
 
   late StreamSubscription subscription;
 
-  MQTTClientManager(String brok, String log, String pass) {
+  bool certUsed = false;
+
+  void setData(String brok, String log, String pass) {
     int port;
     if (brok == '') {
       broker = Config.broker;
@@ -50,7 +52,9 @@ class MQTTClientManager {
     client.secure = true;
     ByteData data = await rootBundle.load(Config.pathToCrt);
     SecurityContext context = SecurityContext.defaultContext;
-    context.setTrustedCertificatesBytes(data.buffer.asUint8List());
+    if (!certUsed) {
+      context.setTrustedCertificatesBytes(data.buffer.asUint8List());
+    }
     // final data = base64Decode(Config.crtStr);
     // client.securityContext.setTrustedCertificatesBytes(data);
     // dev_log.log('Bytes crt = $data');
@@ -82,6 +86,7 @@ class MQTTClientManager {
       return -1;
     }
 
+    certUsed = true;
     return 0;
   }
 

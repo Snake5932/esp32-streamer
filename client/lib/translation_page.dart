@@ -40,7 +40,7 @@ class _TranslationPageState extends State<TranslationPage> {
           onPressed: () {
             widget.manager?.publishMessage('cameras/${widget.cameraName}/cmd', 'stop');
             widget.manager?.client.unsubscribe('cameras/${widget.cameraName}/data');
-            Navigator.pushReplacement(context,
+            Navigator.pop(context,
                 MaterialPageRoute(builder:
                     (context) => MyHomePage(manager: manager))
             );
