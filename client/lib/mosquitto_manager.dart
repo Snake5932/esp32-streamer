@@ -1,13 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:developer' as dev_log;
 
 import 'package:flutter/services.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
-import 'package:path/path.dart' as path;
-import 'package:convert/convert.dart';
 
 import 'camera.dart';
 import 'config.dart';

@@ -6,7 +6,6 @@ import 'package:mqtt_client/mqtt_client.dart';
 
 import 'home_page.dart';
 import 'mosquitto_manager.dart';
-// import 'package:untitled/main_page.dart';
 
 class TranslationPage extends StatefulWidget {
   final MQTTClientManager? manager;
@@ -114,10 +113,6 @@ class _TranslationPageState extends State<TranslationPage> {
               width: 400.0,
               height: 400.0,
               child: bodyStream(),
-              // child: DecoratedBox(
-              //     decoration: BoxDecoration(
-              //         color: Colors.grey
-              //     )),
             ),
           ),
         ],
