@@ -55,9 +55,9 @@ void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
   pfds.events = POLLOUT;
 
   do {
-    Serial.printf("heap size left: %d, wifi_client: %d\n", ESP.getFreeHeap(), wifi_client.availableForWrite());
+    // Serial.printf("heap size left: %d, wifi_client: %d\n", ESP.getFreeHeap(), wifi_client.availableForWrite());
     res = poll(&pfds, 1, -1);
-    Serial.printf("poll ret: %d %d %d %d\n", res, pfds.revents, errno, res < 0);
+    // Serial.printf("poll ret: %d %d %d %d\n", res, pfds.revents, errno, res < 0);
     if (res < 0) {
       Serial.printf("poll err %d\n", errno);
       break;
@@ -68,7 +68,7 @@ void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
     }
     res = send(socket, data+offset, to_write, 0);
     // res = client.write(data+offset, to_write);
-    Serial.printf("written %d %d\n", res, errno);
+    // Serial.printf("written %d %d\n", res, errno);
     if (res < 0) {
       break;
     }
@@ -84,14 +84,14 @@ void publish_large_mqtt(char* channel, uint8_t *data, uint32_t len) {
 
 int dump_camera() {
 	camera_fb_t* fb = esp_camera_fb_get();
-	Serial.printf("camera handle: %p\n", fb);
+	// Serial.printf("camera handle: %p\n", fb);
 	if (fb == NULL) {
 	  return -1;
 	}
-	Serial.println(fb->format);
-	Serial.printf("%dx%d len: %d\n", fb->width, fb->height, fb->len);
+	// Serial.println(fb->format);
+	// Serial.printf("%dx%d len: %d\n", fb->width, fb->height, fb->len);
 	int part = fb->len/3;
-  Serial.printf("heap size left: %d\n", ESP.getFreeHeap());
+  // Serial.printf("heap size left: %d\n", ESP.getFreeHeap());
 	publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf, fb->len);
   // publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + part, part);
   // publish_large_mqtt((char*)camera_data_topic.c_str(), fb->buf + 2*part, part);
@@ -157,6 +157,7 @@ void setup() {
 	setup_wifi(ssid, pass);
 #if WITH_TLS == 1
 	wifi_client.setCACert(tls_cert);
+  Serial.println(tls_cert);
 #endif
 	client.setBufferSize(65535);
 	client.setCallback(callback);
@@ -185,8 +186,8 @@ void loop() {
 	}
 
 	client.loop();
-
-	if (dump_camera_subscribers && curr_msec - last_dump_msec > dump_one_frame_msec) {
+  //curr_msec - last_dump_msec > dump_one_frame_msec
+	if (dump_camera_subscribers) {
 		last_dump_msec = curr_msec;
 		dump_camera();
 	}
