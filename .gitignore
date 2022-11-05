@@ -44,8 +44,12 @@ app.*.map.json
 /client/android/app/release/
 
 # esp32
-esp32_client/module_info.h
+esp32_client/main/module_info.c
+esp32_client/sdkconfig
+esp32_client/build/
+esp32_client/cmake-build-debug/
 
 # test_camera_client
 
-/test_camera_client/build/
+test_camera_client/build/
+test_camera_client/cmake-build-debug/

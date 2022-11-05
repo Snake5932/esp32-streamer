@@ -1,0 +1,19 @@
+const char *mod_wifi_ssid = "ssid name";
+const char *mod_wifi_pass = "ssid pass";
+const unsigned int mod_wifi_reconnect_timeout_msec = 1000;
+const unsigned int mod_wifi_max_retry = 8;
+
+const char *mod_broker_ip = "broker ip or domain";
+#ifdef WITH_TLS
+const int mod_broker_port = 8883;
+#else
+const int mod_broker_port = 1883;
+#endif
+
+const char *mod_broker_username = "user";
+const char *mod_broker_password = "user";
+const unsigned int mod_broker_reconnect_timeout_msec = 2000;
+
+const unsigned long mod_dump_one_frame_msec = 100; //100ms for one frame
+
+const char *mod_camera_name = "test_cam_1";
