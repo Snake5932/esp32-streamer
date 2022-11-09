@@ -1,0 +1,11 @@
+[Unit]
+Description=monitor
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5s
+ExecStart=/srv/monitor/bin/monitor /srv/monitor/configs/monitor.conf
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+{
+  "MosquittoAddr" : "",
+  "MosquittoPort" : 1883,
+  "MosquittoUser" : "",
+  "MosquittoPass" : "",
+  "Cameras"       : [
+    {
+      "Name" : "",
+      "MinVal" : 0,
+      "MaxVal" : 0,
+      "MinRad" : 0,
+      "MaxRad" : 0,
+      "ThreshMin" : 0,
+      "ThreshMax" : 0
+    },
+    {
+      "Name" : "",
+      "MinVal" : 0,
+      "MaxVal" : 0,
+      "MinRad" : 0,
+      "MaxRad" : 0,
+      "ThreshMin" : 0,
+      "ThreshMax" : 0
+    }
+  ]
+}
