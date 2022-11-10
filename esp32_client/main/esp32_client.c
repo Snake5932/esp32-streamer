@@ -22,6 +22,7 @@ char camera_topic[128];
 char camera_state_topic[128];
 char camera_data_topic[128];
 char camera_cmd_topic[128];
+char camera_dump_topic[128];
 
 char *online_str = "online";
 char *offline_str = "offline";
@@ -37,6 +38,10 @@ esp_mqtt_client_handle_t client;
 
 static EventGroupHandle_t mqtt_event_group;
 #define MOD_MQTT_HAS_SUBS_BIT BIT0
+
+#define MQTT_QOS0 0
+#define MQTT_QOS1 1
+#define MQTT_QOS2 2
 
 
 void show_chip_info()
@@ -68,7 +73,7 @@ static int is_cmd(char *topic, int topic_len, char *payload, int len, char *cmd)
 	return strncmp(topic, camera_cmd_topic, topic_len) == 0 && len == strlen(cmd) && strncmp(payload, cmd, len) == 0;
 }
 
-static void dump_camera() {
+static void dump_camera(char *topic, int qos) {
 	printf("cam dump\n");
 	char *buf;
 	int size;
@@ -78,7 +83,7 @@ static void dump_camera() {
 		return;
 	}
 	ESP_LOGI(TAG, "publishing %d bytes\n", size);
-	int ret = esp_mqtt_client_publish(client, camera_data_topic, buf, size, 0, 0);
+	int ret = esp_mqtt_client_publish(client, topic, buf, size, qos, 0);
 	ESP_LOGI(TAG, "published ret: %d\n", ret);
 	camera_free_fb(fb);
 }
@@ -110,7 +115,7 @@ static void mqtt_event_handler(void *ptr, esp_event_base_t base, int32_t event_i
 					dump_camera_subs = 0;
 				}
 			} else if (is_cmd(event->topic, event->topic_len, event->data, event->data_len, dump_cmd)) {
-				dump_camera();
+				dump_camera(camera_dump_topic, MQTT_QOS2);
 			}
 			if (dump_camera_subs > 0) {
 				printf("set bits\n");
@@ -169,6 +174,9 @@ void app_main(void)
 	strcat(camera_cmd_topic, camera_topic);
 	strcat(camera_cmd_topic, "/cmd");
 
+	strcat(camera_dump_topic, camera_topic);
+	strcat(camera_dump_topic, "/dump");
+
 	esp_mqtt_client_config_t mqtt_cfg = {
 			.broker = {
 					.address = {
@@ -223,7 +231,7 @@ void app_main(void)
 		if (!(bits & MOD_MQTT_HAS_SUBS_BIT)) {
 			ESP_LOGE(TAG, "wait bits returned %d\n", bits);
 		} else {
-			dump_camera();
+			dump_camera(camera_data_topic, MQTT_QOS0);
 			vTaskDelay(cam_ticks_per_frame);
 		}
 	}
@@ -235,4 +243,3 @@ void app_main(void)
 //    fflush(stdout);
 //    esp_restart();
 }
-
