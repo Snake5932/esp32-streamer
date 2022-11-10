@@ -62,7 +62,7 @@ func (monitor *Monitor) Run() {
 	token.Wait()
 	topics := make(map[string]byte)
 	for camera := range monitor.cameraList {
-		topics["cameras/"+camera+"/dump"] = 0
+		topics["cameras/"+camera+"/dump"] = 2
 	}
 	if token = monitor.client.SubscribeMultiple(topics, monitor.getCVHandler()); token.Wait() && token.Error() != nil {
 		log.Println(fmt.Errorf("can't subscribe: %v", token.Error()))
@@ -78,6 +78,7 @@ func (monitor *Monitor) Run() {
 
 func (monitor *Monitor) getCVHandler() mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
+		//log.Println(msg.Payload())
 		camName := strings.Split(msg.Topic(), "/")[1]
 		go monitor.analyze(camName, msg.Payload())
 	}
@@ -86,6 +87,8 @@ func (monitor *Monitor) getCVHandler() mqtt.MessageHandler {
 func (monitor *Monitor) getOnlineHandler() mqtt.MessageHandler {
 	return func(client mqtt.Client, msg mqtt.Message) {
 		camName := strings.Split(msg.Topic(), "/")[1]
+		//log.Println(msg.Topic())
+		//log.Println(string(msg.Payload()))
 		if _, ok := monitor.cameraList[camName]; ok {
 			go func() {
 				token := monitor.client.Publish("monitor/"+camName+"/state", 2, true, string(msg.Payload()))
@@ -115,6 +118,8 @@ func (monitor *Monitor) analyze(camName string, data []byte) {
 	}
 	camData := monitor.cameras[i]
 	value, isThresh := computeVal(camData, deg)
+	//log.Println(value)
+	//log.Println(isThresh)
 	strVal := strconv.FormatFloat(value, 'f', -1, 64)
 	if isThresh {
 		token := monitor.client.Publish("monitor/"+camName+"/threshold", 2, false, strVal)
