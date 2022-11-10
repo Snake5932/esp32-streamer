@@ -106,14 +106,16 @@ var defaultHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Messa
 }
 
 func (monitor *Monitor) analyze(camName string, data []byte) {
-	deg, err := cv.Analyze(data)
-	if err != nil {
-		log.Println(fmt.Errorf("can't analyze image: %v", err))
-		return
-	}
 	i, ok := monitor.cameraList[camName]
 	if !ok {
 		log.Println(fmt.Sprintf("unknown camera: %s", camName))
+		return
+	}
+	deg, err := cv.Analyze(data)
+	if err != nil {
+		log.Println(fmt.Errorf("can't analyze image: %v", err))
+		token := monitor.client.Publish("cameras/"+camName+"/cmd", 2, false, "dump")
+		token.Wait()
 		return
 	}
 	camData := monitor.cameras[i]
