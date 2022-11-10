@@ -46,7 +46,7 @@ int read_files(char *dir_name) {
 		return 1;
 	}
 
-	int examples_arr_len = 0;
+	examples_arr_len = 0;
 	while (in_file = readdir(FD)) {
 		if (!strcmp(in_file->d_name, ".")) {
 			continue;
@@ -96,6 +96,7 @@ void dump_camera_topic(char *topic) {
 			curr_example_ind = 0;
 		}
 		img_t im = examples_arr[curr_example_ind];
+		printf("%d %d %d\n", curr_example_ind, examples_arr_len, im.len);
 		mosquitto_publish(client, NULL, topic, im.len, im.buf, 0, 0);
 		curr_example_ind++;
 	} else {
